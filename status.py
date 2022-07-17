@@ -19,6 +19,7 @@ import traceback
 from uptime import uptime
 from uptime import boottime
 import subprocess
+from datetime import datetime
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -29,14 +30,14 @@ try:
     logging.info("init and Clear")
     epd.init()
     epd.Clear()
-    time.sleep(1)
+#    time.sleep(1)
     
     # Drawing on the image
     logging.info("Drawing")    
     font20 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 20)
     font18 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 18)
     font14 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 14)
-    font12 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 12)
+    font10 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 10)
     
     # Drawing on the Horizontal image
     logging.info("1.Drawing on the Horizontal image...") 
@@ -74,14 +75,23 @@ try:
                 icount+=1 # Increment number of lines printed
 
     # Put boottime at bottom right
-    boottime = boottime().strftime("%Y-%m-%d %H%M")
-    w, h = font12.getsize(boottime)
+    boottime = boottime().strftime("B:%Y-%m-%d %H%M")
+    w, h = font10.getsize(boottime)
     x = epd.height - w - 1
     y = epd.width - h - 1
-    drawblack.text((x,y),boottime, font = font12, fill = 0)
+    drawblack.text((x,y),boottime, font = font10, fill = 0)
+
+    # Put update time in bottom left
+    now = datetime.now().strftime("N:%Y-%m-%d %H%M")
+    w, h = font10.getsize(boottime)
+    x = 1
+    y = epd.width - h - 1
+    drawblack.text((x,y),now, font = font10, fill = 0)
+
+
+    # Display the output
     epd.display(epd.getbuffer(HBlackimage), epd.getbuffer(HRYimage))
-    time.sleep(2)
-    
+   
     
     logging.info("Goto Sleep...")
     epd.sleep()
