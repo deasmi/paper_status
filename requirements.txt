@@ -1,0 +1,5 @@
+netifaces==0.11.0
+Pillow==9.2.0
+RPi.GPIO==0.7.1
+spidev==3.5
+uptime==3.0.1
