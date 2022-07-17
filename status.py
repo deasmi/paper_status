@@ -16,6 +16,9 @@ from waveshare_epd import epd2in13b_V3
 import time
 from PIL import Image,ImageDraw,ImageFont,ImageColor
 import traceback
+from uptime import uptime
+from uptime import boottime
+import subprocess
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -33,6 +36,7 @@ try:
     font20 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 20)
     font18 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 18)
     font14 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 14)
+    font12 = ImageFont.truetype(os.path.join(picdir, 'Font.ttc'), 12)
     
     # Drawing on the Horizontal image
     logging.info("1.Drawing on the Horizontal image...") 
@@ -41,41 +45,40 @@ try:
     drawblack = ImageDraw.Draw(HBlackimage)
     drawry = ImageDraw.Draw(HRYimage)
 
-    # drawblack.text((10, 0), 'hello world', font = font20, fill = 0)
-    # drawblack.text((10, 20), '2.13inch e-Paper bc', font = font20, fill = 0)
-    # drawblack.text((120, 0), u'微雪电子', font = font20, fill = 0)    
-    # drawblack.line((20, 50, 70, 100), fill = 0)
-    # drawblack.line((70, 50, 20, 100), fill = 0)
-    # drawblack.rectangle((20, 50, 70, 100), outline = 0)    
-    # drawry.line((165, 50, 165, 100), fill = 0)
-    # drawry.line((140, 75, 190, 75), fill = 0)
-    # drawry.arc((140, 50, 190, 100), 0, 360, fill = 0)
-    # drawry.rectangle((80, 50, 130, 100), fill = 0)
-    # drawry.chord((85, 55, 125, 95), 0, 360, fill =1)
-
     drawblack.text((10,0), platform.node(), font = font20, fill = 0)
 
     gws=netifaces.gateways()
     default=gws['default'][netifaces.AF_INET][1]
 
-    icount=0
-    offset=17
-    lineheight=14
+    icount=0 # How many lines have we printed so far
+    offset=17 # How far from the top should the first line be
+    lineheight=14 # How high are the linesl
+
+
+    # Iterate over few interfaces we are likely to want to know about
     for interface in ["wlan0","usb0","tailscale0"]:
+        if interface == "wlan0":
+            ssid = subprocess.check_output(["/sbin/iwgetid -r"], shell = True).decode().rstrip()
+            label = "ssid: %s" % ssid
+            drawblack.text((10,(icount*lineheight+offset)), label ,font = font14, fill = 0)
+            icount+=1
         int_addrs = netifaces.ifaddresses(interface)
-        if netifaces.AF_INET in int_addrs:
-            ipv4 = int_addrs[netifaces.AF_INET]
-            for address in ipv4:
+        if netifaces.AF_INET in int_addrs: # Check if we have any AF_INET (ipv4) addresses
+            ipv4 = int_addrs[netifaces.AF_INET] # Get all addresses
+            for address in ipv4: # For each one print a label to the screen
                 label = "%s - %s" % (address['addr'],interface)
-                if interface == default:
+                if interface == default: # Check for default and make red
                     drawry.text((10,(icount*lineheight+offset)), label ,font = font14, fill = 0)
                 else:
                     drawblack.text((10,(icount*lineheight+offset)), label ,font = font14, fill = 0)
-                icount+=1
+                icount+=1 # Increment number of lines printed
 
-            
-    
-    
+    # Put boottime at bottom right
+    boottime = boottime().strftime("%Y-%m-%d %H%M")
+    w, h = font12.getsize(boottime)
+    x = epd.height - w - 1
+    y = epd.width - h - 1
+    drawblack.text((x,y),boottime, font = font12, fill = 0)
     epd.display(epd.getbuffer(HBlackimage), epd.getbuffer(HRYimage))
     time.sleep(2)
     
