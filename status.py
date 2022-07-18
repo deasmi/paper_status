@@ -49,7 +49,10 @@ try:
     drawblack.text((10,0), platform.node(), font = font20, fill = 0)
 
     gws=netifaces.gateways()
-    default=gws['default'][netifaces.AF_INET][1]
+    if netifaces.AF_INET in gws['default']:
+        default=gws['default'][netifaces.AF_INET][1]
+    else:
+        default=''
 
     icount=0 # How many lines have we printed so far
     offset=17 # How far from the top should the first line be
@@ -59,8 +62,12 @@ try:
     # Iterate over few interfaces we are likely to want to know about
     for interface in ["wlan0","usb0","tailscale0"]:
         if interface == "wlan0":
-            ssid = subprocess.check_output(["/sbin/iwgetid -r"], shell = True).decode().rstrip()
-            label = "ssid: %s" % ssid
+            output = subprocess.run(["/sbin/iwgetid -r"], shell = True, check = False)
+            if output.returncode == 0:
+                ssid = output.decode().rstrip()
+                label = "ssid: %s" % ssid
+            else:
+                label = "ssid: Not Connected"
             drawblack.text((10,(icount*lineheight+offset)), label ,font = font14, fill = 0)
             icount+=1
         int_addrs = netifaces.ifaddresses(interface)
