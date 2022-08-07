@@ -62,9 +62,9 @@ try:
     # Iterate over few interfaces we are likely to want to know about
     for interface in ["wlan0","usb0","tailscale0"]:
         if interface == "wlan0":
-            output = subprocess.run(["/sbin/iwgetid -r"], shell = True, check = False)
+            output = subprocess.run(["/sbin/iwgetid -r"], shell = True, check = False, capture_output = True)
             if output.returncode == 0:
-                ssid = output.decode().rstrip()
+                ssid = output.stdout.decode('ascii').rstrip()
                 label = "ssid: %s" % ssid
             else:
                 label = "ssid: Not Connected"
